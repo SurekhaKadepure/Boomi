@@ -5,12 +5,12 @@ on:
     branches:
       - main
     paths:
-      - 'boomi_release/CICD_cp_release.json'
+      - 'boomi-release/release.json'
   workflow_dispatch: 
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
       - name: Checkout Repository
@@ -18,13 +18,13 @@ jobs:
 
       - name: Create Boomi Packaged Component
         env:
-          B_USER: ${{ secrets.BOOMI_USERNAME }}
-          B_PASS: ${{ secrets.BOOMI_PASSWORD }}
-          B_ACC: ${{ secrets.BOOMI_ACCOUNT_ID }}
+          B_USER: ${{ vars.BOOMI_USERNAME }}
+          B_URL: ${{ vars.BOOMI_BASE_URL }}
+          B_ACC: ${{ vars.BOOMI_ACCOUNT_ID }}
         run: |
           # 1. Extract Data from the 'pipelines' array
-          COMP_ID=$(jq -r '.pipelines[0].componentId // empty' boomi_release/CICD_cp_release.json)
-          VERSION=$(jq -r '.pipelines[0].packageVersion // empty' boomi_release/CICD_cp_release.json)
+          COMP_ID=$(jq -r '.pipelines[0].componentId // empty' boomi-release/release.json)
+          VERSION=$(jq -r '.pipelines[0].packageVersion // empty' boomi-release/release.json)
           
           # Since componentType isn't in your JSON, we default to 'process'
           # If it's a different type, add it to your JSON and use jq to grab it.
@@ -38,7 +38,7 @@ jobs:
           echo "🚀 Packaging $COMP_TYPE: $COMP_ID (Version: $VERSION)"
 
           # 2. Execute API Call
-          response=$(curl -s -u "$B_USER:$B_PASS" \
+          response=$(curl -s -u "$B_USER" \
                -X POST "https://api.boomi.com/api/rest/v1/$B_ACC/PackagedComponent" \
                -H "Content-Type: application/json" \
                -H "Accept: application/json" \
