@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'boomi_release/CICD_cp_release.json'
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create Boomi Packaged Component
+        env:
+          B_USER: ${{ secrets.BOOMI_USERNAME }}
+          B_PASS: ${{ secrets.BOOMI_PASSWORD }}
+          B_ACC: ${{ secrets.BOOMI_ACCOUNT_ID }}
+        run: |
+          # 1. Extract Data from the 'pipelines' array
+          COMP_ID=$(jq -r '.pipelines[0].componentId // empty' boomi_release/CICD_cp_release.json)
+          VERSION=$(jq -r '.pipelines[0].packageVersion // empty' boomi_release/CICD_cp_release.json)
+          
+          # Since componentType isn't in your JSON, we default to 'process'
+          # If it's a different type, add it to your JSON and use jq to grab it.
+          COMP_TYPE="process"
+
+          if [ -z "$COMP_ID" ] || [ -z "$VERSION" ]; then
+            echo "❌ Error: Could not find componentId or packageVersion inside the pipelines array."
+            exit 1
+          fi
+
+          echo "🚀 Packaging $COMP_TYPE: $COMP_ID (Version: $VERSION)"
+
+          # 2. Execute API Call
+          response=$(curl -s -u "$B_USER:$B_PASS" \
+               -X POST "https://api.boomi.com/api/rest/v1/$B_ACC/PackagedComponent" \
+               -H "Content-Type: application/json" \
+               -H "Accept: application/json" \
+               -d "{
+                 \"componentId\": \"$COMP_ID\",
+                 \"componentType\": \"$COMP_TYPE\",
+                 \"packageVersion\": \"$VERSION\",
+                 \"notes\": \"GitHub Action #$GITHUB_RUN_NUMBER\"
+               }" -w "\n%{http_code}")
+
+          HTTP_STATUS=$(echo "$response" | tail -n 1)
+          BODY=$(echo "$response" | sed '$d')
+
+          echo "Status Code: $HTTP_STATUS"
+          echo "Response Body: $BODY"
+
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "❌ Boomi API Failed with status $HTTP_STATUS"
+            exit 1
+          fi
