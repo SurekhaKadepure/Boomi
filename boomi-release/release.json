@@ -1,0 +1,9 @@
+{ 
+"pipelines": [ 
+{ 
+"packageVersion": "4.0", 
+"componentId": "f41fa481-cc58-42cc-8792-036cb9b4b766", 
+"notes": "[x] Initial Test new file | Package creation workflow Demo" 
+} 
+]  
+}
