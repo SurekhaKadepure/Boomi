@@ -1,8 +1,8 @@
 { 
 "pipelines": [ 
 { 
-"packageVersion": "4.0", 
-"componentId": "f41fa481-cc58-42cc-8792-036cb9b4b766", 
+"packageVersion": "2.0", 
+"componentId": "ec1ff4ff-1d98-48b3-ab8d-0fd7c026a157", 
 "notes": "[x] Initial Test new file | Package creation workflow Demo" 
 } 
 ]  
